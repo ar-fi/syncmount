@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        {
+            "name": "Default",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "cStandard": "c11",
+            "cppStandard": "c++20",
+            "configurationProvider": "go2sh.cmake-integration",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}
