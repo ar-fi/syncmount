@@ -1,3 +1,9 @@
 {
-    "C_Cpp.default.configurationProvider": "go2sh.cmake-integration"
+    "C_Cpp.default.configurationProvider": "go2sh.cmake-integration",
+    "cmake.cpptools.intelliSenseMode": "gcc-x64",
+    "cmake.cpptools.languageConfiguration.CXX": {
+        "compilerPath": "/usr/bin/g++-10",
+        "intelliSenseMode": "gcc-x64"
+    },
+    "cmake.default.generator": "Unix Makefiles"
 }
