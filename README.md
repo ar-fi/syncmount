@@ -22,8 +22,4 @@ If -s command line option is provided, events are logged by means of OS syslog u
 
 -S command line option will affect all Read-Write mounts, implying sync flag and forcing OS to try all read/write operations with USB device synchronously.
 
-The queued message (-m command line option) has the following format:
-
-        uint8_t mount_type (0 - ReadOnly, 1 - ReadWrite)
-        char[] path (NULL-terminated string with full mount path)
-
+-c command line options will create a control message queue to receive unmount command from user

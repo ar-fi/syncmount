@@ -20,7 +20,8 @@ using namespace std::string_literals;
 #define NO_VALUE_FLAG "novalue"
 
 #define ROOT_MOUNT_OPTION "-r"
-#define MQUEUE_NAME_OPTION "-m"
+#define EVENTS_MQUEUE_NAME_OPTION "-m"
+#define CONTROL_MQUEUE_NAME_OPTION "-c"
 #define LOG_FILE_OPTION "-l"
 #define RW_LABEL_OPTION "-w"
 #define ALWAYS_RW_OPTION "-W"
@@ -30,7 +31,8 @@ using namespace std::string_literals;
 #define RUN_BACKGROUND_OPTION "-b"
 
 #define DEFAULT_ROOT_MOUNT "/var/syncmount"
-#define DEFAULT_MQUEUE "/syncmount"
+#define DEFAULT_EVENTS_MQUEUE "/syncmount.events"
+#define DEFAULT_CONTROL_MQUEUE "/syncmount.control"
 #define DEFAULT_LOGFILE "/var/log/syncmount.log"
 #define PID_FILE "syncmount.pid"
 
@@ -38,7 +40,8 @@ typedef std::map<const std::string, const char *> option_settings_t;
 const std::map<const std::string, const option_settings_t> OPTIONS = {
     {ROOT_MOUNT_OPTION,
      {{DEFAULT_VALUE_SETTING, DEFAULT_ROOT_MOUNT}, {HELP_STRING_SETTING, "Root mount path"}}},
-    {MQUEUE_NAME_OPTION, {{DEFAULT_VALUE_SETTING, DEFAULT_MQUEUE}, {HELP_STRING_SETTING, "Mesage queue name"}}},
+    {EVENTS_MQUEUE_NAME_OPTION, {{DEFAULT_VALUE_SETTING, DEFAULT_EVENTS_MQUEUE}, {HELP_STRING_SETTING, "Events mesage queue name"}}},
+    {CONTROL_MQUEUE_NAME_OPTION, {{DEFAULT_VALUE_SETTING, DEFAULT_CONTROL_MQUEUE}, {HELP_STRING_SETTING, "Control mesage queue name"}}},
     {LOG_FILE_OPTION, {{DEFAULT_VALUE_SETTING, DEFAULT_LOGFILE}, {HELP_STRING_SETTING, "Log filename"}}},
     {RW_LABEL_OPTION, {{MANDATORY_COMMAND_STRING_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Disk/partition/volume label for RW mount"}}},
     {USE_SYSLOG_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Use syslog for logging"}}},
