@@ -3,14 +3,15 @@
     "tasks": [
         {
             "label": "Build",
-            "command": "make",
+            "command": "ninja",
             "type": "shell",
             "options": {
                 "cwd": "${workspaceRoot}/build"
             },
             "args": [
                 "-j",
-                "12"
+                "12",
+                "all"
             ],
             "group": {
                 "kind": "build",
