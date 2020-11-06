@@ -9,8 +9,7 @@ add_executable(syncmount
     main.cpp
     )
 
-TARGET_LINK_LIBRARIES(syncmount pthread m)
-
+TARGET_LINK_LIBRARIES(syncmount pthread m udev blkid rt crypto)
 
 include_directories(
 )
