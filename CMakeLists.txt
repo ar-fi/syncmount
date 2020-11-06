@@ -7,6 +7,8 @@ link_directories(
 
 add_executable(syncmount
     main.cpp
+    logger.cpp
+    log.hpp
     )
 
 TARGET_LINK_LIBRARIES(syncmount pthread m udev blkid rt crypto)
