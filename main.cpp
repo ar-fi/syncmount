@@ -385,7 +385,7 @@ int main(const int argc, const char *argv[])
                 throw std::exception();
             }
 
-            if (root_mount_path.length() > (PATH_MAX - NAME_MAX - strlen("MOUNT:RW:")))
+            if (root_mount_path.length() > (PATH_MAX - NAME_MAX - strlen("RWMOUNT:")))
             {
                 std::cerr << "ERROR: too long path name for -r option" << std::endl
                           << std::flush;
@@ -544,7 +544,7 @@ int main(const int argc, const char *argv[])
                 mount_flags |= MS_SYNCHRONOUS;
 
             if (mount(device.c_str(), mount_path.c_str(), type.c_str(), mount_flags,
-                      filesystem_specific_mount_options.contains(type.c_str()) ? filesystem_specific_mount_options.at(type.c_str()).c_str() : nullptr) == 0) // great! it has been mounted
+                      filesystem_specific_mount_options.contains(type) ? filesystem_specific_mount_options.at(type).c_str() : nullptr) == 0) // great! it has been mounted
             {
                 struct statvfs stat = {0};
                 statvfs(mount_path.c_str(), &stat);
@@ -626,7 +626,7 @@ int main(const int argc, const char *argv[])
                             {std::string(fs_uuid), std::string(fs_label)},
                             {dir_name, dir_name}});
                     } while (mounted_paths.contains(dir_name));
-                    mount_fs(root_mount_path + dir_name, dev_name, std::string(fs_label), std::string(fs_type, fs_type_len));
+                    mount_fs(root_mount_path + dir_name, dev_name, std::string(fs_label), std::string(fs_type));
                 }
                 else
                     Log::Info("TODO:"s + __FILE__ + ":" + std::to_string(__LINE__));
