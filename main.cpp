@@ -47,6 +47,7 @@ using namespace std::string_literals;
 #define DEFAULT_CONTROL_MQUEUE "/syncmount.control"
 #define DEFAULT_LOGFILE "/var/log/syncmount.log"
 #define PID_FILE "/var/run/syncmount.pid"
+#define MQUEUE_MESSAGE_SIZE PATH_MAX
 
 const mode_t pid_file_mask = (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 const mode_t log_file_mask = (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -454,7 +455,7 @@ int main(const int argc, const char *argv[])
     {
         mq_attr attr = {0};
         attr.mq_maxmsg = 16;
-        attr.mq_msgsize = PATH_MAX; // unmount control message will contain path of the mount
+        attr.mq_msgsize = MQUEUE_MESSAGE_SIZE; // unmount control message will contain path of the mount
         umask(~control_mqueue_mask & 0777);
         control->fd = mq_open(command_string_options.at(CONTROL_MQUEUE_NAME_OPTION), O_CREAT | O_RDONLY, control_mqueue_mask, &attr);
         if (control->fd < 0)
@@ -664,7 +665,19 @@ int main(const int argc, const char *argv[])
 
         if (control->revents & POLLIN)
         {
-            // TODO
+            char buffer[MQUEUE_MESSAGE_SIZE];
+            int read_bytes = mq_receive(control->fd, buffer, sizeof(buffer), 0);
+
+            int path_len = 0;
+            while (path_len < read_bytes && buffer[path_len]) // search zero terminated C string
+                path_len++;
+
+            if (path_len)
+            {
+                std::string path(buffer, path_len);
+                if (mounted_paths.contains(path))
+                    remove_device(mounted_paths.at(path));
+            }
         }
 
         if (monitor->revents & POLLIN && (current_device = udev_monitor_receive_device(udev_monitor_handle)) != nullptr)
