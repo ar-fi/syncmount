@@ -453,7 +453,7 @@ int main(const int argc, const char *argv[])
                     mount_fs(root_mount_path + dir_name, dev_name, std::string(fs_label), std::string(fs_type));
                 }
                 else
-                    Log::Info("TODO:"s + __FILE__ + ":" + std::to_string(__LINE__));
+                    Log::Info("New device with "s + fs_type + " filesystem, labeled as '" + fs_label + "'");
             }
             blkid_free_probe(pr);
         };
