@@ -10,6 +10,7 @@ add_executable(syncmount
     logger_logfile.cpp
     logger_console.cpp
     logger_syslog.cpp
+    logger_mqueue.cpp
     log.hpp
     )
 

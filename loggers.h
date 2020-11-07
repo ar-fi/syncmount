@@ -46,3 +46,11 @@ public:
     void Write(const std::string &, const std::string &) override;
     void DeInit() override;
 };
+
+class MQueue : public AbstractLogger
+{
+public:
+    void Init(const config_options_t &) override;
+    void Write(const std::string &, const std::string &) override;
+    void DeInit() override;
+};
