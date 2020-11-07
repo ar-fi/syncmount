@@ -1,4 +1,3 @@
-
 #include "loggers.h"
 
 void LogFile::Init(const config_options_t &options)

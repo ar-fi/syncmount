@@ -108,7 +108,7 @@ private:
 
     void ImplInit(const auto &options)
     {
-        loggers = {new Console, new LogFile};
+        loggers = {new Console, new LogFile, new Syslog};
         for (auto &logger : loggers)
             logger->Init(options);
     }

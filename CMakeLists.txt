@@ -9,6 +9,7 @@ add_executable(syncmount
     main.cpp
     logger_logfile.cpp
     logger_console.cpp
+    logger_syslog.cpp
     log.hpp
     )
 

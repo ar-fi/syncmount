@@ -38,3 +38,11 @@ public:
 private:
     std::string filename;
 };
+
+class Syslog : public AbstractLogger
+{
+public:
+    void Init(const config_options_t &) override;
+    void Write(const std::string &, const std::string &) override;
+    void DeInit() override;
+};

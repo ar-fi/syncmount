@@ -1,4 +1,3 @@
-
 #include "loggers.h"
 
 void Console::Init(const config_options_t &options)
