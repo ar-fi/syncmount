@@ -7,7 +7,8 @@ link_directories(
 
 add_executable(syncmount
     main.cpp
-    logger.cpp
+    logger_logfile.cpp
+    logger_console.cpp
     log.hpp
     )
 
