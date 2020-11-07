@@ -3,6 +3,9 @@
 #include <map>
 #include <vector>
 #include "logger.h"
+#include <sstream>
+#include <chrono>
+#include <iomanip>
 
 class Log
 {
@@ -96,13 +99,16 @@ private:
 
     void ImplLog(auto &data)
     {
+        auto ts = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        std::ostringstream ss;
+        ss << std::put_time(gmtime(&ts), "%FT%TZ");
         for (auto logger : loggers)
-            logger->Write(data);
+            logger->Write(data, ss.str());
     }
 
     void ImplInit(const auto &options)
     {
-        loggers = {new Console};
+        loggers = {new Console, new LogFile};
         for (auto &logger : loggers)
             logger->Init(options);
     }

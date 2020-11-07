@@ -3,8 +3,8 @@
 #include <map>
 #include <vector>
 #include <map>
-#include <sstream>
 #include "options.h"
+#include <chrono>
 
 class AbstractLogger
 {
@@ -13,7 +13,7 @@ public:
     AbstractLogger(const AbstractLogger &) = delete;
     AbstractLogger &operator=(const AbstractLogger &) = delete;
     bool isReady() { return ready; }
-    virtual void Write(const std::string &) = 0;
+    virtual void Write(const std::string &, const std::string &) = 0;
     virtual void Init(const config_options_t &) = 0;
     virtual void DeInit() = 0;
 
@@ -25,7 +25,19 @@ class Console : public AbstractLogger
 {
 public:
     Console();
-    void Init(const config_options_t &options) override;
+    void Init(const config_options_t &) override;
     void DeInit() override;
-    void Write(const std::string &data) override;
+    void Write(const std::string &, const std::string &) override;
+};
+
+class LogFile : public AbstractLogger
+{
+public:
+    LogFile();
+    void Init(const config_options_t &) override;
+    void DeInit() override;
+    void Write(const std::string &, const std::string &) override;
+
+private:
+    std::string filename;
 };
