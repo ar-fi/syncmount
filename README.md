@@ -2,18 +2,18 @@
 # USB Drives automount daemon for AR-Fi Sync solution
 
 This piece of software is designed and implemented as a single-client daemon utility,
-intended for use by its client as source for notifications about mount/unmount events.
+intended for use by its client as source of notifications about mount/unmount events.
 Syncmount uses Linux kernel bindings to monitor attachement and detachement of USB mass storage devices and mounts found partitions/volumes with filesystems, supported by kernel.
 The nature of tasks, run by syncmount, requires root priveledges to be able to mount filesystems.
 
 ## Features:
 
 * mounts filesystems, supported by Linux kernel (may require extra kernel modules to be installed to support particular filesystems)
-* sends notification to unpreviledged piece of software by means of Linux Message Queue
+* sends notification to unpreviledged piece of software by means of POSIX Message Queue
 * can be used in unpriveledged mode for monitoring of attached USB storage devices only
 * runs in background as well as in foregroud
 * can mount filesystems both in read-only and read-write modes, depending on the label of partition/volume.
-* can be commanded by third party software to unmount particular partition/volume by means of dedicated Linus Message Queue
+* can be commanded by third party software to unmount particular partition/volume by means of dedicated POSIX Message Queue
 
 ## Build
 
@@ -103,3 +103,14 @@ Console logging is available in foreground mode only.
 ## License
 
 GPLv3.0
+
+## TODO
+
+* scan and account already mounted partitions/volumes upon startup (option)
+* mount attached USB partitions/volumes upon startup (option)
+* cross-compile instructions
+* prebuilt packages
+
+## Contribution
+
+You're free to issue pull-requests, while it is not guaranteed to be revised in 
