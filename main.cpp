@@ -73,7 +73,8 @@ int main(const int argc, const char *argv[])
         (void)arg;
         if (s == SIGHUP)
             Log::SuppressDeinit();
-        Log::Info("Stopped by signal "s + std::to_string(s));
+
+        Log::Info("Stopped PID "s + std::to_string(getpid()) + " by signal "s + std::to_string(s));
         _exit(0); // terminate process
     };
 

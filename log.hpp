@@ -2,10 +2,10 @@
 #include <string>
 #include <map>
 #include <vector>
-#include "loggers.h"
 #include <sstream>
 #include <chrono>
 #include <iomanip>
+#include "loggers.h"
 
 class Log
 {
@@ -108,9 +108,12 @@ private:
 
     void ImplInit(const auto &options)
     {
-        loggers = {new Console, new LogFile, new Syslog};
+        loggers = {new Console, new LogFile, new Syslog, new MQueue};
         for (auto &logger : loggers)
             logger->Init(options);
+
+        std::string info("Started with PID " + std::to_string(getpid()));
+        ImplLog(info);
     }
 
     static Log &ImplGet()
