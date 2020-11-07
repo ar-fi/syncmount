@@ -15,7 +15,7 @@ public:
     bool isReady() { return ready; }
     virtual void Write(const std::string &, const std::string &) = 0;
     virtual void Init(const config_options_t &) = 0;
-    virtual void DeInit() = 0;
+    virtual void DeInit() {}
 
 protected:
     bool ready;
@@ -24,18 +24,14 @@ protected:
 class Console : public AbstractLogger
 {
 public:
-    Console();
     void Init(const config_options_t &) override;
-    void DeInit() override;
     void Write(const std::string &, const std::string &) override;
 };
 
 class LogFile : public AbstractLogger
 {
 public:
-    LogFile();
     void Init(const config_options_t &) override;
-    void DeInit() override;
     void Write(const std::string &, const std::string &) override;
 
 private:
