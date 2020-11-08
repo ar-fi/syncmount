@@ -18,7 +18,7 @@ The nature of tasks, run by syncmount, requires root privileges to be able to mo
 
 ## Build
 
-To compile under Debian/Ununtu:
+To compile under Debian/Ubuntu:
 
 * install build environment
 ```
@@ -38,6 +38,7 @@ cd ./build
 cmake ../
 make
 ```
+compiled binary is in build/bin directory
 
 ## Example usage
 
@@ -57,6 +58,9 @@ sudo -d -r /path/to/mounts -W -s
 ```
 sudo -d -r -w backup -S -s -l -m -c /unmount_backups
 ```
+
+## Usage Notice
+For mounting functionality -r option as well as root privileges are required!
 
 
 ## Operational description
