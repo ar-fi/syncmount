@@ -185,9 +185,18 @@ int main(const int argc, const char *argv[])
             }
         }
 
+        abort_ret_code++;
         // root mount path sanity check
         if (command_string_options.contains(ROOT_MOUNT_OPTION))
         {
+
+            if (getuid() != 0)
+            {
+                std::cerr << "ERROR: -r option requires root privileges" << std::endl
+                          << std::flush;
+                throw std::exception();
+            }
+
             root_mount_path = std::string(command_string_options.at(ROOT_MOUNT_OPTION));
             if (root_mount_path.at(0) != '/')
             {
