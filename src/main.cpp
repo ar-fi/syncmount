@@ -30,7 +30,6 @@
 #include <functional>
 #include <sys/mount.h>
 #include <errno.h>
-#include <openssl/sha.h>
 #include <sys/statvfs.h>
 #include "options.h"
 #include "log.hpp"
@@ -47,6 +46,8 @@ using namespace std::string_literals;
 #define DEFAULT_CONTROL_MQUEUE "/syncmount.control"
 #define DEFAULT_LOGFILE "/var/log/syncmount.log"
 #define PID_FILE "/var/run/syncmount.pid"
+
+#define RND_MOUNT_DIR_NAME_LEN (32)
 
 const std::map<const std::string, const config_options_t> OPTIONS = {
     {ROOT_MOUNT_OPTION,
@@ -389,24 +390,15 @@ int main(const int argc, const char *argv[])
         }
     }
 
-    auto generate_mount_dir_name = [&mounted_paths](const auto &device_salt) {
+    auto generate_mount_dir_name = [](const int name_len) {
         static const char *vocabulary = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_+";
-        unsigned char hash[SHA256_DIGEST_LENGTH];
-        SHA256_CTX ctx;
-        SHA256_Init(&ctx);
-        const auto update_hash = [&ctx](const auto &map) {
-            const auto &[path, dev] = map;
-            SHA256_Update(&ctx, path.data(), path.size());
-            SHA256_Update(&ctx, dev.data(), dev.size());
-        };
+        srand(std::chrono::system_clock::now().time_since_epoch().count());
 
-        for_each(begin(device_salt), end(device_salt), update_hash);
-        for_each(begin(mounted_paths), end(mounted_paths), update_hash);
-        SHA256_Final(hash, &ctx);
-        std::string dir_name;
-        for (unsigned char c : hash)
-            dir_name.push_back(vocabulary[c & 0x3F]);
-
+        std::string dir_name("syncmount_");
+        for (int i = 0; i < name_len; i++)
+        {
+            dir_name.push_back(vocabulary[rand() & 0x3F]);
+        }
         return dir_name;
     };
 
@@ -513,9 +505,7 @@ int main(const int argc, const char *argv[])
                     std::string dir_name;
                     do
                     {
-                        dir_name = generate_mount_dir_name(std::map<std::string, std::string>{
-                            {std::string(fs_uuid), std::string(fs_label)},
-                            {dir_name, dir_name}});
+                        dir_name = generate_mount_dir_name(RND_MOUNT_DIR_NAME_LEN);
                     } while (mounted_paths.contains(dir_name));
                     mount_fs(root_mount_path + dir_name, dev_name, std::string(fs_label), std::string(fs_type));
                 }

@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 link_directories(
 )
 
+
 add_executable(syncmount
     main.cpp
     logger_logfile.cpp
@@ -13,7 +14,7 @@ add_executable(syncmount
     logger_mqueue.cpp
     )
 
-TARGET_LINK_LIBRARIES(syncmount pthread m udev blkid rt crypto)
+TARGET_LINK_LIBRARIES(syncmount pthread m udev blkid rt)
 
 include_directories(
 )
