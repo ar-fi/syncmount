@@ -547,8 +547,7 @@ int main(const int argc, const char *argv[])
     while (true)
     {
         monitor->revents = control->revents = 0;
-        int poll_err = poll(pfds, poll_fds, -1);
-        if (poll_err <= 0)
+        if (poll(pfds, poll_fds, -1) <= 0)
         {
             Log::Error("Internal error");
             return abort_ret_code;
