@@ -46,9 +46,9 @@ compiled binary is in build/bin directory
 ```
 syncmount
 ```
-* start monitor, mount and log all mounts to console and log file using default root mount path and log filename:
+* mount already attached USB devices, start monitor, mount and log all mounts to console and log file using default root mount path and log filename:
 ```
-sudo syncmount -r -f
+sudo syncmount -r -f -U
 ```
 * run in background, monitor and mount ALL filesystems in ReadWrite mode, using particular root mount folder and log everything using syslog:
 ```
@@ -64,6 +64,8 @@ For mounting functionality -r option as well as root privileges are required!
 
 
 ## Operational description
+
+If -U option provided, on startup syncmount will search attached USB block devices and try to mount them in accordance with other command string options.
 
 While in normal operation, syncmount monitors attachment/detachment of USB storage devices.
 When USB storage attached, syncmount scans it for partitions/volumes and mount all found ones under subfolders of root mount folder as ReadOnly or ReadWrite. Mount paths will have global access for read and write for unprivileged users. 
@@ -112,7 +114,6 @@ GPLv3.0
 ## TODO
 
 * scan and account already mounted partitions/volumes upon startup (option)
-* mount attached USB partitions/volumes upon startup (option)
 * cross-compile instructions
 * pre-built packages
 

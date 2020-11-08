@@ -31,7 +31,7 @@ const mode_t control_mqueue_mask = (S_IRUSR | S_IWUSR | S_IWGRP | S_IWOTH);
 #define DAEMONIZE_OPTION "-d"
 #define RUN_BACKGROUND_OPTION "-b"
 #define SHOW_HELP_OPTION "-h"
-
+#define SCAN_FOR_USB_DEVICES_OPTION "-U"
 #define MQUEUE_MESSAGE_SIZE PATH_MAX
 
 typedef std::map<const std::string, const char *> config_options_t;

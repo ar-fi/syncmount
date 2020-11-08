@@ -48,6 +48,8 @@ using namespace std::string_literals;
 #define PID_FILE "/var/run/syncmount.pid"
 
 #define RND_MOUNT_DIR_NAME_LEN (32)
+#define SUPPRESS_LOGGING (true)
+#define DONT_SUPPRESS_LOGGING (false)
 
 const std::map<const std::string, const config_options_t> OPTIONS = {
     {ROOT_MOUNT_OPTION,
@@ -62,6 +64,7 @@ const std::map<const std::string, const config_options_t> OPTIONS = {
     {RUN_BACKGROUND_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Run in background (aka -d)."}}},
     {DAEMONIZE_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Daemonize (aka -b)."}}},
     {SHOW_HELP_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Show these clues."}}},
+    {SCAN_FOR_USB_DEVICES_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "On start scan for existing USB partitions and mount them."}}},
 };
 
 const std::map<const std::string, const std::string> filesystem_specific_mount_options = {
@@ -74,7 +77,7 @@ int main(const int argc, const char *argv[])
     // lifetime vars
     config_options_t command_string_options;
     std::string root_mount_path;
-    std::map<std::string, std::string> mounted_paths = {{"/path", "/dev"}};
+    std::map<std::string, std::pair<std::string, bool>> mounted_paths;
     int abort_ret_code = 0;
 
     // signals handler
@@ -94,27 +97,32 @@ int main(const int argc, const char *argv[])
     for (int i = 1; i <= 64; i++)
         sigaction(i, &child_sigaction, NULL);
 
-    // parse command string for options
+    // lambda
     auto is_key = [](auto &key_candidate) {
         return OPTIONS.contains(key_candidate);
     };
 
+    // lambda
     auto has_default = [](auto &key) {
         return OPTIONS.contains(key) && OPTIONS.at(key).contains(DEFAULT_VALUE_SETTING);
     };
 
+    // lambda
     auto novalue_option = [&is_key](auto &key) {
         return OPTIONS.contains(key) && OPTIONS.at(key).contains(NO_VALUE_FLAG);
     };
 
+    // lambda
     auto get_default_value = [&is_key](auto &key) {
         return is_key(key) ? (OPTIONS.at(key).contains(DEFAULT_VALUE_SETTING) ? OPTIONS.at(key).at(DEFAULT_VALUE_SETTING) : nullptr) : nullptr;
     };
 
+    // lambda
     auto is_mandatory = [&is_key](auto &key) {
         return is_key(key) ? OPTIONS.at(key).contains(MANDATORY_COMMAND_STRING_VALUE_FLAG) : false;
     };
 
+    // lambda
     auto verify_mandatory = [&is_key](auto &key, auto &... value) {
         try
         {
@@ -138,6 +146,7 @@ int main(const int argc, const char *argv[])
         }
     };
 
+    // lambda
     auto append_option = [&command_string_options](const auto &key, const auto &value) {
         if (command_string_options.contains(key) && !OPTIONS.at(key).contains(NO_VALUE_FLAG))
         {
@@ -149,6 +158,7 @@ int main(const int argc, const char *argv[])
         command_string_options[key] = value;
     };
 
+    // parse command string for options
     try
     {
         abort_ret_code++;
@@ -340,6 +350,7 @@ int main(const int argc, const char *argv[])
     else
         monitor->events = POLLIN;
 
+    // add userspace controller
     struct pollfd *const control = &pfds[1];
     if (command_string_options.contains(CONTROL_MQUEUE_NAME_OPTION))
     {
@@ -390,6 +401,7 @@ int main(const int argc, const char *argv[])
         }
     }
 
+    // lambda
     auto generate_mount_dir_name = [](const int name_len) {
         static const char *vocabulary = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_+";
         srand(std::chrono::system_clock::now().time_since_epoch().count());
@@ -402,13 +414,15 @@ int main(const int argc, const char *argv[])
         return dir_name;
     };
 
-    auto mount_fs = [&command_string_options, &mounted_paths](const auto &mount_path, const auto &device, const auto &label, const auto &type) {
+    // lambda
+    auto mount_fs = [&command_string_options, &mounted_paths](const auto &mount_path, const auto &device, const auto &label, const auto &type, bool suppress_logging) {
         try
         {
             umask(~mkdir_mask & 0777);
             if (mkdir(mount_path.c_str(), mkdir_mask) < 0 && errno != EEXIST)
             {
-                Log::Error("Can't create mount directory.");
+                if (!suppress_logging)
+                    Log::Error("Can't create mount directory.");
                 throw std::exception();
             }
 
@@ -419,7 +433,8 @@ int main(const int argc, const char *argv[])
                 mount_flags &= ~MS_RDONLY;
                 if (chmod(mount_path.c_str(), 0777) < 0)
                 {
-                    Log::Error("Can't change permissions for mount directory.");
+                    if (!suppress_logging)
+                        Log::Error("Can't change permissions for mount directory.");
                     throw std::exception();
                 }
             }
@@ -432,11 +447,15 @@ int main(const int argc, const char *argv[])
                 struct statvfs stat = {0};
                 statvfs(mount_path.c_str(), &stat);
 
-                mounted_paths[mount_path] = device;
-                Log::Mount(mount_path, stat.f_flag & MS_RDONLY);
+                mounted_paths[mount_path] = std::pair<std::string, bool>(device, stat.f_flag & MS_RDONLY);
+                if (!suppress_logging)
+                    Log::Mount(mount_path, stat.f_flag & MS_RDONLY);
 
                 if (!(mount_flags & MS_RDONLY) && (stat.f_flag & MS_RDONLY))
-                    Log::Info("Can mount " + type + " filesystem in read-only mode only.");
+                {
+                    if (!suppress_logging)
+                        Log::Info("Can mount " + type + " filesystem in read-only mode only.");
+                }
             }
             else // something went wrong
             {
@@ -445,17 +464,29 @@ int main(const int argc, const char *argv[])
                 case EACCES: //
                 {
                     if (!(mount_flags & MS_RDONLY))
-                        Log::Error("Can't mount read-only filesystem in write mode.");
+                    {
+                        if (!suppress_logging)
+                            Log::Error("Can't mount read-only filesystem in write mode.");
+                    }
                     else
-                        Log::Error("Internal error while mounting filesystem: " + std::to_string(errno));
+                    {
+                        if (!suppress_logging)
+                            Log::Error("Internal error while mounting filesystem: " + std::to_string(errno));
+                    }
                 }
                 break;
                 case ENODEV:
-                    Log::Error("Filesystem "s + type + " is not supported by this kernel.");
-                    break;
+                {
+                    if (!suppress_logging)
+                        Log::Error("Filesystem "s + type + " is not supported by this kernel.");
+                }
+                break;
                 default:
-                    Log::Error("Internal error while mounting filesystem: " + std::to_string(errno));
-                    break;
+                {
+                    if (!suppress_logging)
+                        Log::Error("Internal error while mounting filesystem: " + std::to_string(errno));
+                }
+                break;
                 }
                 throw std::exception();
             }
@@ -467,8 +498,9 @@ int main(const int argc, const char *argv[])
         }
     };
 
-    std::function<void(const std::string &)> // recursion requires explicit prototype
-        probe_device = [&](const std::string &dev_name) {
+    // lambda
+    std::function<void(const std::string &, bool)> // recursion requires explicit prototype
+        probe_device = [&](const std::string &dev_name, bool suppress_logging) {
             const blkid_probe pr = blkid_new_probe_from_filename(dev_name.c_str());
             if (!pr)
                 return;
@@ -482,7 +514,7 @@ int main(const int argc, const char *argv[])
             if (ls && (nparts = blkid_partlist_numof_partitions(ls)) != 0)
             {
                 for (int i = 0; i < nparts; i++)
-                    probe_device(dev_name + std::to_string(i + 1));
+                    probe_device(dev_name + std::to_string(i + 1), suppress_logging);
             }
             else
             {
@@ -499,7 +531,10 @@ int main(const int argc, const char *argv[])
                 err += blkid_probe_lookup_value(pr, "TYPE", &fs_type, &fs_type_len);
 
                 if (err)
-                    Log::Error("Probe of "s + dev_name + " falied.");
+                {
+                    if (!suppress_logging)
+                        Log::Error("Probe of "s + dev_name + " falied.");
+                }
                 else if (root_mount_path.size())
                 {
                     std::string dir_name;
@@ -507,18 +542,23 @@ int main(const int argc, const char *argv[])
                     {
                         dir_name = generate_mount_dir_name(RND_MOUNT_DIR_NAME_LEN);
                     } while (mounted_paths.contains(dir_name));
-                    mount_fs(root_mount_path + dir_name, dev_name, std::string(fs_label), std::string(fs_type));
+                    mount_fs(root_mount_path + dir_name, dev_name, std::string(fs_label), std::string(fs_type), suppress_logging);
                 }
                 else
-                    Log::Info("New device with "s + fs_type + " filesystem, labeled as '" + fs_label + "'");
+                {
+                    if (!suppress_logging)
+                        Log::Info("New device with "s + fs_type + " filesystem, labeled as '" + fs_label + "'");
+                }
             }
             blkid_free_probe(pr);
         };
 
+    // lambda
     auto remove_device = [&mounted_paths](const auto &removed_device) {
         std::vector<std::string> unmounted;
-        for (const auto &[mount_path, mounted_device] : mounted_paths)
+        for (const auto &[mount_path, data] : mounted_paths)
         {
+            const auto &[mounted_device, read_only] = data;
             if (mounted_device.starts_with(removed_device))
             {
                 umount2(mount_path.c_str(), MNT_DETACH);
@@ -534,6 +574,28 @@ int main(const int argc, const char *argv[])
     struct udev_device *current_device;
     abort_ret_code++;
 
+    // force rescan USB mass storage devices and mount unmounted partitions
+    if (command_string_options.contains(SCAN_FOR_USB_DEVICES_OPTION))
+    {
+        struct udev_enumerate *udev_enum = udev_enumerate_new(udev_handle);
+        udev_enumerate_add_match_subsystem(udev_enum, "block");
+        udev_enumerate_add_match_property(udev_enum, "ID_BUS", "usb");
+        udev_enumerate_scan_devices(udev_enum);
+
+        struct udev_list_entry *dev_list = udev_enumerate_get_list_entry(udev_enum);
+
+        while (dev_list)
+        {
+            udev_device *current_device = udev_device_new_from_syspath(udev_handle, udev_list_entry_get_name(dev_list));
+            const std::string device_path((udev_list_entry_get_value(udev_list_entry_get_by_name(udev_device_get_properties_list_entry(current_device), "DEVNAME"))));
+            probe_device(device_path, SUPPRESS_LOGGING);
+            udev_device_unref(current_device);
+            dev_list = udev_list_entry_get_next(dev_list);
+        }
+        udev_enumerate_unref(udev_enum);
+    }
+
+    // main event loop
     while (true)
     {
         monitor->revents = control->revents = 0;
@@ -556,7 +618,7 @@ int main(const int argc, const char *argv[])
             {
                 std::string path(buffer, path_len);
                 if (mounted_paths.contains(path))
-                    remove_device(mounted_paths.at(path));
+                    remove_device(mounted_paths.at(path).first);
             }
         }
 
@@ -566,7 +628,7 @@ int main(const int argc, const char *argv[])
             const std::string device_path((udev_list_entry_get_value(udev_list_entry_get_by_name(udev_device_get_properties_list_entry(current_device), "DEVNAME"))));
 
             if (device_action == "add")
-                probe_device(device_path);
+                probe_device(device_path, DONT_SUPPRESS_LOGGING);
             else if (device_action == "remove")
                 remove_device(device_path);
 
