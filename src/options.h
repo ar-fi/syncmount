@@ -29,5 +29,6 @@ const mode_t control_mqueue_mask = (S_IRUSR | S_IWUSR | S_IWGRP | S_IWOTH);
 #define USE_SYSLOG_OPTION "-s"
 #define DAEMONIZE_OPTION "-d"
 #define RUN_BACKGROUND_OPTION "-b"
+#define SHOW_HELP_OPTION "-h"
 
 typedef std::map<const std::string, const char *> config_options_t;

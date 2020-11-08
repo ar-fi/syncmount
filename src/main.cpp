@@ -52,16 +52,17 @@ using namespace std::string_literals;
 
 const std::map<const std::string, const config_options_t> OPTIONS = {
     {ROOT_MOUNT_OPTION,
-     {{DEFAULT_VALUE_SETTING, DEFAULT_ROOT_MOUNT}, {HELP_STRING_SETTING, "Root mount path"}}},
-    {EVENTS_MQUEUE_NAME_OPTION, {{NO_VALUE_FLAG, ""}, {DEFAULT_VALUE_SETTING, DEFAULT_EVENTS_MQUEUE}, {HELP_STRING_SETTING, "Events mesage queue name"}}},
-    {CONTROL_MQUEUE_NAME_OPTION, {{NO_VALUE_FLAG, ""}, {DEFAULT_VALUE_SETTING, DEFAULT_CONTROL_MQUEUE}, {HELP_STRING_SETTING, "Control mesage queue name"}}},
-    {LOG_FILE_OPTION, {{DEFAULT_VALUE_SETTING, DEFAULT_LOGFILE}, {HELP_STRING_SETTING, "Log filename"}}},
-    {RW_LABEL_OPTION, {{MANDATORY_COMMAND_STRING_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Disk/partition/volume label for RW mount"}}},
-    {USE_SYSLOG_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Use syslog for logging"}}},
-    {ALWAYS_RW_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Mount RW everything"}}},
-    {SYNC_MOUNT_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Apply sync flag when mounting RW"}}},
-    {RUN_BACKGROUND_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Run in background (aka -d)"}}},
-    {DAEMONIZE_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Daemonize (aka -b)"}}},
+     {{DEFAULT_VALUE_SETTING, DEFAULT_ROOT_MOUNT}, {HELP_STRING_SETTING, "Root mount path."}}},
+    {EVENTS_MQUEUE_NAME_OPTION, {{NO_VALUE_FLAG, ""}, {DEFAULT_VALUE_SETTING, DEFAULT_EVENTS_MQUEUE}, {HELP_STRING_SETTING, "Events mesage queue name."}}},
+    {CONTROL_MQUEUE_NAME_OPTION, {{NO_VALUE_FLAG, ""}, {DEFAULT_VALUE_SETTING, DEFAULT_CONTROL_MQUEUE}, {HELP_STRING_SETTING, "Control mesage queue name."}}},
+    {LOG_FILE_OPTION, {{DEFAULT_VALUE_SETTING, DEFAULT_LOGFILE}, {HELP_STRING_SETTING, "Log filename."}}},
+    {RW_LABEL_OPTION, {{MANDATORY_COMMAND_STRING_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Disk/partition/volume label for RW mount."}}},
+    {USE_SYSLOG_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Use syslog for logging."}}},
+    {ALWAYS_RW_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Mount RW everything."}}},
+    {SYNC_MOUNT_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Apply sync flag when mounting RW."}}},
+    {RUN_BACKGROUND_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Run in background (aka -d)."}}},
+    {DAEMONIZE_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Daemonize (aka -b)."}}},
+    {SHOW_HELP_OPTION, {{NO_VALUE_FLAG, ""}, {HELP_STRING_SETTING, "Show these clues."}}},
 };
 
 const std::map<const std::string, const std::string> filesystem_specific_mount_options = {
@@ -90,25 +91,6 @@ int main(const int argc, const char *argv[])
 
     for (int i = 1; i <= 64; i++)
         sigaction(i, &child_sigaction, NULL);
-
-    // cleanup
-    std::ifstream pid_file(PID_FILE, std::ios::in | std::ios::binary | std::ios::ate);
-    if (pid_file.is_open())
-    {
-        if (pid_file.tellg()) // non zero pid file
-        {
-            std::string pid_data;
-            pid_data.resize(pid_file.tellg());
-            pid_data.reserve(pid_file.tellg());
-            pid_file.seekg(std::ios::beg);
-            pid_file.read(pid_data.data(), pid_data.size());
-            pid_t pid = std::strtoul(pid_data.c_str(), NULL, 10);
-            if (pid) // pid parsed w/o errors
-                kill(pid, SIGHUP);
-        }
-        pid_file.close();
-        unlink(PID_FILE);
-    }
 
     // parse command string for options
     auto is_key = [](auto &key_candidate) {
@@ -258,6 +240,60 @@ int main(const int argc, const char *argv[])
     catch (const std::exception &e)
     {
         return 1; // terminate if command string options parsing failed
+    }
+
+    // show help clues
+    if (command_string_options.contains(SHOW_HELP_OPTION))
+    {
+        std::cerr << R"(
+    USB mass storage automount/monitoring utility.
+
+    syncmount [options]
+
+    Options:)" << std::endl;
+
+        for (const auto option : OPTIONS)
+        {
+            const auto &[key, settings] = option;
+            const bool mandatory_string_value = settings.contains(MANDATORY_COMMAND_STRING_VALUE_FLAG);
+            const bool novalue = settings.contains(NO_VALUE_FLAG);
+            const auto &default_value = settings.contains(DEFAULT_VALUE_SETTING) ? settings.at(DEFAULT_VALUE_SETTING) : std::string();
+            const auto &help_string = settings.at(HELP_STRING_SETTING);
+
+            std::cerr << "\t" << key << "\t - " << help_string;
+            if (novalue)
+                std::cerr << " No value required.";
+            else
+                std::cerr << " String value required.";
+            if (default_value.size())
+            {
+                std::cerr << std::endl
+                          << "\t\t\t"
+                          << "Default: " << default_value;
+            }
+            std::cerr << std::endl
+                      << std::endl;
+        }
+        return 0;
+    }
+
+    // cleanup previous start
+    std::ifstream pid_file(PID_FILE, std::ios::in | std::ios::binary | std::ios::ate);
+    if (pid_file.is_open())
+    {
+        if (pid_file.tellg()) // non zero pid file
+        {
+            std::string pid_data;
+            pid_data.resize(pid_file.tellg());
+            pid_data.reserve(pid_file.tellg());
+            pid_file.seekg(std::ios::beg);
+            pid_file.read(pid_data.data(), pid_data.size());
+            pid_t pid = std::strtoul(pid_data.c_str(), NULL, 10);
+            if (pid) // pid parsed w/o errors
+                kill(pid, SIGHUP);
+        }
+        pid_file.close();
+        unlink(PID_FILE);
     }
 
     // initialise loggers
