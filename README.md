@@ -98,7 +98,6 @@ Console logging is available in foreground mode only.
 	libudev.so.1 => /lib/x86_64-linux-gnu/libudev.so.1 (0x00007f4f9c75d000)
 	libblkid.so.1 => /lib/x86_64-linux-gnu/libblkid.so.1 (0x00007f4f9c706000)
 	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007f4f9c6fb000)
-	libcrypto.so.1.1 => /lib/x86_64-linux-gnu/libcrypto.so.1.1 (0x00007f4f9c425000)
 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007f4f9c244000)
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f4f9c227000)
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f4f9c035000)
