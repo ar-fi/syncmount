@@ -60,7 +60,12 @@ public:
 class MQueue : public AbstractLogger
 {
 public:
+    MQueue() : mq_fd(-1) {}
     void Init(const config_options_t &) override;
     void Write(const std::string &, const std::string &) override;
     void DeInit() override;
+
+private:
+    std::string mqueue_name;
+    int mq_fd;
 };

@@ -26,7 +26,6 @@
 #include <libudev.h>
 #include <poll.h>
 #include <blkid/blkid.h>
-#include <linux/limits.h>
 #include <mqueue.h>
 #include <functional>
 #include <sys/mount.h>
@@ -48,7 +47,6 @@ using namespace std::string_literals;
 #define DEFAULT_CONTROL_MQUEUE "/syncmount.control"
 #define DEFAULT_LOGFILE "/var/log/syncmount.log"
 #define PID_FILE "/var/run/syncmount.pid"
-#define MQUEUE_MESSAGE_SIZE PATH_MAX
 
 const std::map<const std::string, const config_options_t> OPTIONS = {
     {ROOT_MOUNT_OPTION,
@@ -76,6 +74,7 @@ int main(const int argc, const char *argv[])
     config_options_t command_string_options;
     std::string root_mount_path;
     std::map<std::string, std::string> mounted_paths = {{"/path", "/dev"}};
+    int abort_ret_code = 0;
 
     // signals handler
     struct sigaction child_sigaction = {0};
@@ -86,6 +85,8 @@ int main(const int argc, const char *argv[])
             Log::SuppressDeinit();
 
         Log::Info("Stopped PID "s + std::to_string(getpid()) + " by signal "s + std::to_string(s));
+        Log::DeInit();
+
         _exit(0); // terminate process
     };
 
@@ -149,6 +150,7 @@ int main(const int argc, const char *argv[])
 
     try
     {
+        abort_ret_code++;
         for (int i = 1; i < argc; i++)
         {
             if (!is_key(argv[i]))
@@ -239,7 +241,7 @@ int main(const int argc, const char *argv[])
     }
     catch (const std::exception &e)
     {
-        return 1; // terminate if command string options parsing failed
+        return abort_ret_code; // terminate if command string options parsing failed
     }
 
     // show help clues
@@ -297,7 +299,15 @@ int main(const int argc, const char *argv[])
     }
 
     // initialise loggers
-    Log::Init(command_string_options);
+    try
+    {
+        abort_ret_code++;
+        Log::Init(command_string_options);
+    }
+    catch (const std::exception &e)
+    {
+        return abort_ret_code;
+    }
 
     // initialise usb monitor
     struct udev *const udev_handle = udev_new();
@@ -310,11 +320,12 @@ int main(const int argc, const char *argv[])
 
     struct pollfd *const monitor = &pfds[0];
     monitor->fd = udev_monitor_get_fd(udev_monitor_handle);
+    abort_ret_code++;
     if (monitor->fd < 0)
     {
         std::cerr << "ERROR: Can't utilize UDEV kernel infrastructure." << std::endl
                   << std::flush;
-        return 2;
+        return abort_ret_code;
     }
     else
         monitor->events = POLLIN;
@@ -336,6 +347,7 @@ int main(const int argc, const char *argv[])
         control->fd = -1; // negative fd is ignored by poll
 
     // fork if required
+    abort_ret_code++;
     if (command_string_options.contains(RUN_BACKGROUND_OPTION) || command_string_options.contains(DAEMONIZE_OPTION))
     {
         pid_t pid = fork();
@@ -343,7 +355,7 @@ int main(const int argc, const char *argv[])
         {
             std::cerr << "ERROR: Can't daemonise." << std::endl
                       << std::flush;
-            return 3;
+            return abort_ret_code;
         }
         else if (pid > 0)
         {
@@ -521,6 +533,7 @@ int main(const int argc, const char *argv[])
     };
 
     struct udev_device *current_device;
+    abort_ret_code++;
 
     while (true)
     {
@@ -529,7 +542,7 @@ int main(const int argc, const char *argv[])
         if (poll_err <= 0)
         {
             Log::Error("Internal error");
-            return 4;
+            return abort_ret_code;
         }
 
         if (control->revents & POLLIN)

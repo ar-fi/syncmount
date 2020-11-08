@@ -12,11 +12,12 @@
 #include <map>
 #include <string>
 #include <sys/stat.h>
+#include <linux/limits.h>
 
 const mode_t pid_file_mask = (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 const mode_t log_file_mask = (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 const mode_t mkdir_mask = (S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
-const mode_t event_mqueue_mask = (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+const mode_t events_mqueue_mask = (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 const mode_t control_mqueue_mask = (S_IRUSR | S_IWUSR | S_IWGRP | S_IWOTH);
 
 #define ROOT_MOUNT_OPTION "-r"
@@ -30,5 +31,7 @@ const mode_t control_mqueue_mask = (S_IRUSR | S_IWUSR | S_IWGRP | S_IWOTH);
 #define DAEMONIZE_OPTION "-d"
 #define RUN_BACKGROUND_OPTION "-b"
 #define SHOW_HELP_OPTION "-h"
+
+#define MQUEUE_MESSAGE_SIZE PATH_MAX
 
 typedef std::map<const std::string, const char *> config_options_t;

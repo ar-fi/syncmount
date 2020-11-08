@@ -16,6 +16,7 @@
 #include <chrono>
 #include <iomanip>
 #include "loggers.h"
+#include <mqueue.h>
 
 class Log
 {
@@ -52,6 +53,10 @@ public:
     {
         ImplGet().ImplInit(options);
     }
+    static void DeInit()
+    {
+        ImplGet().ImplDeInit();
+    }
 
     static void SuppressDeinit()
     {
@@ -77,6 +82,12 @@ private:
     {
         for (auto logger : loggers)
             logger->DeInit();
+        run_deinit = false;
+
+        if (options->contains(CONTROL_MQUEUE_NAME_OPTION))
+        {
+            int ret = mq_unlink(options->at(CONTROL_MQUEUE_NAME_OPTION));
+        }
     }
 
     std::string &ImplPrepareLogData(const std::string &data, enum ImplEventType event_type, bool read_only_flag = false)
@@ -124,6 +135,7 @@ private:
 
         std::string info("Started with PID " + std::to_string(getpid()));
         ImplLog(info);
+        this->options = &options;
     }
 
     static Log &ImplGet()
@@ -137,4 +149,5 @@ private:
     std::vector<AbstractLogger *> loggers;
     std::string log_data;
     bool run_deinit;
+    config_options_t const *options;
 };
