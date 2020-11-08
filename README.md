@@ -10,7 +10,7 @@ The nature of tasks, run by syncmount, requires root privileges to be able to mo
 ## Features:
 
 * mounts filesystems, supported by Linux kernel (may require extra kernel modules to be installed to support particular filesystems)
-* sends notification to unprivileged piece of software by means of POSIX Message Queue
+* sends notifications to unprivileged piece of software by means of POSIX Message Queue
 * can be used in unprivileged mode for monitoring of attached USB storage devices only
 * runs in background as well as in foreground
 * can mount filesystems both in read-only and read-write modes, depending on the label of partition/volume.

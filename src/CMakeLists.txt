@@ -12,7 +12,6 @@ add_executable(syncmount
     logger_console.cpp
     logger_syslog.cpp
     logger_mqueue.cpp
-    log.hpp
     )
 
 TARGET_LINK_LIBRARIES(syncmount pthread m udev blkid rt crypto)
