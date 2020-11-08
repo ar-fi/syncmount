@@ -1,3 +1,13 @@
+/**
+ * Copyright © 2020 AR-Fi Tech Ltd. https://www.ar-fi.com
+ * 
+ * Project:       SyncMount
+ * Filename:      logger_logfile.cpp
+ * Author(s):     Stanislav Silnicki
+ * Licence:       GPLv3
+ * 
+ **/
+
 #include "loggers.h"
 
 void LogFile::Init(const config_options_t &options)

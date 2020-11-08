@@ -1,3 +1,13 @@
+/**
+ * Copyright © 2020 AR-Fi Tech Ltd. https://www.ar-fi.com
+ * 
+ * Project:       SyncMount
+ * Filename:      options.h
+ * Author(s):     Stanislav Silnicki
+ * Licence:       GPLv3
+ * 
+ **/
+
 #pragma once
 #include <map>
 #include <string>
