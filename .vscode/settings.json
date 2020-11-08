@@ -5,5 +5,13 @@
         "compilerPath": "/usr/bin/g++-10",
         "intelliSenseMode": "gcc-x64"
     },
-    "cmake.default.generator": "Unix Makefiles"
+    "cmake.default.generator": "Unix Makefiles",
+    "spellright.language": [
+        "en_US"
+    ],
+    "spellright.documentTypes": [
+        "markdown",
+        "latex",
+        "plaintext"
+    ]
 }
