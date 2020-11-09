@@ -33,6 +33,7 @@
 #include <sys/statvfs.h>
 #include "options.h"
 #include "log.hpp"
+#include <regex>
 
 using namespace std::string_literals;
 
@@ -47,9 +48,16 @@ using namespace std::string_literals;
 #define DEFAULT_LOGFILE "/var/log/syncmount.log"
 #define PID_FILE "/var/run/syncmount.pid"
 
-#define RND_MOUNT_DIR_NAME_LEN (32)
+#define MOUNT_DIR_PREFIX "syncmount_"
+#define MOUNT_DIR_RND_SUFFIX_VOCAB "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define MOUNT_DIR_RND_SUFFIX_LEN (32)
+
+const std::regex MOUNT_DIR_NAME_RE("/" MOUNT_DIR_PREFIX "[" MOUNT_DIR_RND_SUFFIX_VOCAB "]+$");
+
 #define SUPPRESS_LOGGING (true)
 #define DONT_SUPPRESS_LOGGING (false)
+
+// const std::regex r(""s + MOUNT_DIR_PREFIX +  );
 
 const std::map<const std::string, const config_options_t> OPTIONS = {
     {ROOT_MOUNT_OPTION,
@@ -402,15 +410,11 @@ int main(const int argc, const char *argv[])
     }
 
     // lambda
-    auto generate_mount_dir_name = [](const int name_len) {
-        static const char *vocabulary = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_+";
+    auto generate_mount_dir_name = []() {
         srand(std::chrono::system_clock::now().time_since_epoch().count());
-
-        std::string dir_name("syncmount_");
-        for (int i = 0; i < name_len; i++)
-        {
-            dir_name.push_back(vocabulary[rand() & 0x3F]);
-        }
+        std::string dir_name(MOUNT_DIR_PREFIX);
+        for (int i = 0; i < MOUNT_DIR_RND_SUFFIX_LEN; i++)
+            dir_name.push_back(MOUNT_DIR_RND_SUFFIX_VOCAB[rand() * (strlen(MOUNT_DIR_RND_SUFFIX_VOCAB) - 1) / RAND_MAX]);
         return dir_name;
     };
 
@@ -540,7 +544,7 @@ int main(const int argc, const char *argv[])
                     std::string dir_name;
                     do
                     {
-                        dir_name = generate_mount_dir_name(RND_MOUNT_DIR_NAME_LEN);
+                        dir_name = generate_mount_dir_name();
                     } while (mounted_paths.contains(dir_name));
                     mount_fs(root_mount_path + dir_name, dev_name, std::string(fs_label), std::string(fs_type), suppress_logging);
                 }
@@ -571,29 +575,68 @@ int main(const int argc, const char *argv[])
             mounted_paths.erase(path);
     };
 
+    { // tmp scope
+        std::vector<std::string> mounted_devices;
+
+        // build a list of already mounted filesystems
+        std::fstream proc_mounts("/proc/mounts", std::ios::in);
+        if (proc_mounts.is_open())
+        {
+            std::string mount_line;
+            std::regex r("^([^\\s]+)\\s+([^\\s]+)\\s+[^\\s]+\\s+r([ow])");
+            std::smatch m;
+            while (std::getline(proc_mounts, mount_line))
+            {
+                if (std::regex_search(mount_line, m, r))
+                {
+                    std::string device = m.str(1);
+                    std::string mount_path = m.str(2);
+
+                    std::string::size_type pos = 0u;
+                    while ((pos = mount_path.find("\\040", pos)) != std::string::npos)
+                    {
+                        mount_path.replace(pos, 4, " ");
+                        pos += 1;
+                    }
+                    bool read_only_mount = m.str(3).starts_with("o");
+                    mounted_devices.push_back(device);
+
+                    if (std::regex_search(mount_path, m, MOUNT_DIR_NAME_RE))
+                        mounted_paths[mount_path] = std::pair<std::string, bool>(device, read_only_mount);
+                }
+            }
+            proc_mounts.close();
+        }
+
+        // force rescan USB mass storage devices and mount unmounted partitions
+        if (command_string_options.contains(SCAN_FOR_USB_DEVICES_OPTION))
+        {
+            struct udev_enumerate *udev_enum = udev_enumerate_new(udev_handle);
+            udev_enumerate_add_match_subsystem(udev_enum, "block");
+            udev_enumerate_add_match_property(udev_enum, "ID_BUS", "usb");
+            udev_enumerate_scan_devices(udev_enum);
+
+            struct udev_list_entry *dev_list = udev_enumerate_get_list_entry(udev_enum);
+
+            while (dev_list)
+            {
+                udev_device *current_device = udev_device_new_from_syspath(udev_handle, udev_list_entry_get_name(dev_list));
+                const std::string device_path((udev_list_entry_get_value(udev_list_entry_get_by_name(udev_device_get_properties_list_entry(current_device), "DEVNAME"))));
+                udev_device_unref(current_device);
+
+                if (std::find_if(mounted_devices.begin(), mounted_devices.end(),
+                                 [&](const auto &obj) {
+                                     return !obj.compare(device_path);
+                                 }) == mounted_devices.end())
+                    probe_device(device_path, SUPPRESS_LOGGING);
+                dev_list = udev_list_entry_get_next(dev_list);
+            }
+            udev_enumerate_unref(udev_enum);
+        }
+    } // tmp scope
+
     struct udev_device *current_device;
     abort_ret_code++;
-
-    // force rescan USB mass storage devices and mount unmounted partitions
-    if (command_string_options.contains(SCAN_FOR_USB_DEVICES_OPTION))
-    {
-        struct udev_enumerate *udev_enum = udev_enumerate_new(udev_handle);
-        udev_enumerate_add_match_subsystem(udev_enum, "block");
-        udev_enumerate_add_match_property(udev_enum, "ID_BUS", "usb");
-        udev_enumerate_scan_devices(udev_enum);
-
-        struct udev_list_entry *dev_list = udev_enumerate_get_list_entry(udev_enum);
-
-        while (dev_list)
-        {
-            udev_device *current_device = udev_device_new_from_syspath(udev_handle, udev_list_entry_get_name(dev_list));
-            const std::string device_path((udev_list_entry_get_value(udev_list_entry_get_by_name(udev_device_get_properties_list_entry(current_device), "DEVNAME"))));
-            probe_device(device_path, SUPPRESS_LOGGING);
-            udev_device_unref(current_device);
-            dev_list = udev_list_entry_get_next(dev_list);
-        }
-        udev_enumerate_unref(udev_enum);
-    }
 
     // main event loop
     while (true)

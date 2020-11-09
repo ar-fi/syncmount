@@ -112,7 +112,6 @@ GPLv3.0
 
 ## TODO
 
-* scan and account already mounted partitions/volumes upon startup (option)
 * cross-compile instructions
 * pre-built packages
 
