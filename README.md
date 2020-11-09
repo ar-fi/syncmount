@@ -166,7 +166,6 @@ GPLv3.0
 
 ## TODO
 
-* cross-compile instructions
 * pre-built packages
 
 ## Contribution
