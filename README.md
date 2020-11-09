@@ -16,13 +16,12 @@ The nature of tasks, run by syncmount, requires root privileges to be able to mo
 * can mount filesystems both in read-only and read-write modes, depending on the label of partition/volume.
 * can be commanded by third party software to unmount particular partition/volume by means of dedicated POSIX Message Queue
 
-## Build
-
+## Build 
 To compile under Debian/Ubuntu:
 
 * install build environment
 ```
-sudo apt install git build-essential cmake libudev-dev libblkid-dev libssl-dev g++-10
+sudo apt install git build-essential cmake libudev-dev libblkid-dev g++-10
 ```
 
 * clone repository:
@@ -34,6 +33,61 @@ git clone https://github.com/ar-fi/syncmount
 ```
 cd syncmount
 mkdir ./build
+cd ./build
+cmake ../
+make
+```
+compiled binary is in build/bin directory
+
+## Cross-compile for armhf (Raspberry, etc) using Ubuntu host
+
+* install build environment
+```
+sudo apt install git build-essential cmake libudev-dev libblkid-dev g++-10-arm-linux-gnueabihf
+```
+
+* clone repository:
+```
+git clone https://github.com/ar-fi/syncmount
+```
+
+* download dependency libraries (replace 'focal' for the name of your Ubuntu distro, running add-apt-repository command)
+```
+sudo dpkg --add-architecture armhf
+sudo add-apt-repository "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports focal main multiverse restricted universe"
+sudo apt update
+cd ./syncmount
+mkdir cross
+cd ./cross
+apt download libblkid1:armhf
+apt download libudev1:armhf
+ar x libblkid1*
+unxz data.tar.xz -c | tar xf -
+ar x libudev1*
+unxz data.tar.xz -c | tar xf -
+rm -R usr *.xz *.deb debian-binary
+cd lib/arm-linux-gnueabihf
+ln -s libblkid.so.1 libblkid.so
+ln -s libudev.so.1 libudev.so
+cd ../../../
+```
+
+* Edit src/CMakeLists.txt
+
+comment 
+```
+set(CMAKE_CXX_COMPILER g++-10)
+```
+
+uncomment 
+```
+#set(CMAKE_CXX_COMPILER arm-linux-gnueabihf-g++-10)
+#target_link_directories(syncmount PUBLIC ${PROJECT_SOURCE_DIR}/cross/lib/arm-linux-gnueabihf)
+```
+
+* Compile
+```
+mkdir build
 cd ./build
 cmake ../
 make
@@ -118,3 +172,5 @@ GPLv3.0
 ## Contribution
 
 You're free to issue pull-requests, while it is not guaranteed to be revised in fixed time
+
+
