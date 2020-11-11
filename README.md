@@ -11,7 +11,6 @@ The nature of tasks, run by syncmount, requires root privileges to be able to mo
 
 * mounts filesystems, supported by Linux kernel (may require extra kernel modules to be installed to support particular filesystems)
 * sends notifications to unprivileged piece of software by means of POSIX Message Queue
-* can be used in unprivileged mode for monitoring of attached USB storage devices only
 * runs in background as well as in foreground
 * can mount filesystems both in read-only and read-write modes, depending on the label of partition/volume.
 * can be commanded by third party software to unmount particular partition/volume by means of dedicated POSIX Message Queue
@@ -96,10 +95,6 @@ compiled binary is in build/bin directory
 
 ## Example usage
 
-* to start monitor for attached partitions/volumes in foreground without mounting:
-```
-syncmount
-```
 * mount already attached USB devices, start monitor, mount and log all mounts to console and log file using default root mount path and log filename:
 ```
 sudo syncmount -r -f -U
