@@ -17,7 +17,7 @@ include_directories(
 )
 
 # host arch compile
-#set(CMAKE_CXX_COMPILER g++-10)
+# set(CMAKE_CXX_COMPILER g++-10)
 
 # armhf cross compile
 set(CMAKE_CXX_COMPILER arm-linux-gnueabihf-g++-10)

@@ -414,7 +414,7 @@ int main(const int argc, const char *argv[])
         srand(std::chrono::system_clock::now().time_since_epoch().count());
         std::string dir_name(MOUNT_DIR_PREFIX);
         for (int i = 0; i < MOUNT_DIR_RND_SUFFIX_LEN; i++)
-            dir_name.push_back(MOUNT_DIR_RND_SUFFIX_VOCAB[rand() * (strlen(MOUNT_DIR_RND_SUFFIX_VOCAB) - 1) / RAND_MAX]);
+            dir_name.push_back(MOUNT_DIR_RND_SUFFIX_VOCAB[(uint64_t)rand() * (strlen(MOUNT_DIR_RND_SUFFIX_VOCAB) - 1) / RAND_MAX]);
         return dir_name;
     };
 
