@@ -397,6 +397,7 @@ int main(const int argc, const char *argv[])
                 pid_file.flush();
                 pid_file.close();
             }
+            Log::SuppressDeinit();
             return 0;
         }
         else
