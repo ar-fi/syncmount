@@ -4,7 +4,7 @@
     "cmake.cpptools.languageConfiguration.CXX": {
         "intelliSenseMode": "gcc-x64"
     },
-    "cmake.default.generator": "Unix Makefiles",
+    "cmake.generator": "Unix Makefiles",
     "spellright.language": [
         "en_US"
     ],
