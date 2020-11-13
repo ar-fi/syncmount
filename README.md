@@ -15,7 +15,7 @@ The nature of tasks, run by syncmount, requires root privileges to be able to mo
 * can mount filesystems both in read-only and read-write modes, depending on the label of partition/volume.
 * can be commanded by third party software to unmount particular partition/volume by means of dedicated POSIX Message Queue
 
-## Build 
+## Build & install
 To compile under Debian/Ubuntu:
 
 * install build environment
@@ -28,21 +28,32 @@ sudo apt install git build-essential cmake libudev-dev libblkid-dev g++-10
 git clone https://github.com/ar-fi/syncmount
 ```
 
-* cd & build
+* build binaries:
 ```
 cd syncmount
 mkdir ./build
 cd ./build
+eval `dpkg-architecture -f -s`
 cmake ../
 make
 ```
-compiled binary is in build/bin directory
 
-## Cross-compile for armhf (Raspberry, etc) using Ubuntu host
-
-* install build environment
+* build deb package:
 ```
-sudo apt install git build-essential cmake libudev-dev libblkid-dev g++-10-arm-linux-gnueabihf
+make dist
+```
+
+* install package:
+```
+sudo dpkg -i syncmount_1.0.0_amd64.deb
+```
+
+
+## Cross-compile (armhf as an example target architecture)
+
+* install build environment:
+```
+sudo apt install git build-essential cmake g++-10-arm-linux-gnueabihf binutils-arm-linux-gnueabihf dpkg-cross
 ```
 
 * clone repository:
@@ -50,48 +61,38 @@ sudo apt install git build-essential cmake libudev-dev libblkid-dev g++-10-arm-l
 git clone https://github.com/ar-fi/syncmount
 ```
 
-* download dependency libraries (replace 'focal' for the name of your Ubuntu distro, running add-apt-repository command)
+* add package repository to download armhf dependency packages from:
 ```
 sudo dpkg --add-architecture armhf
 sudo add-apt-repository "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports focal main multiverse restricted universe"
 sudo apt update
+```
+
+* download armhf packages:
+```
 cd ./syncmount
-mkdir cross
-cd ./cross
-apt download libblkid1:armhf
-apt download libudev1:armhf
-ar x libblkid1*
-unxz data.tar.xz -c | tar xf -
-ar x libudev1*
-unxz data.tar.xz -c | tar xf -
-rm -R usr *.xz *.deb debian-binary
-cd lib/arm-linux-gnueabihf
-ln -s libblkid.so.1 libblkid.so
-ln -s libudev.so.1 libudev.so
-cd ../../../
+apt download libuuid1:armhf uuid-dev:armhf libudev1:armhf libudev-dev:armhf libblkid1:armhf libblkid-dev:armhf
 ```
 
-* Edit src/CMakeLists.txt
-
-comment 
+* install armhf packages into appropriate sysroot:
 ```
-set(CMAKE_CXX_COMPILER g++-10)
-```
-
-uncomment 
-```
-#set(CMAKE_CXX_COMPILER arm-linux-gnueabihf-g++-10)
-#target_link_directories(syncmount PUBLIC ${PROJECT_SOURCE_DIR}/cross/lib/arm-linux-gnueabihf)
+sudo dpkg-cross -M -a armhf -i libuuid1*deb uuid-dev*deb libudev1*deb libudev-dev*deb libblkid1*deb libblkid-dev*deb
+rm *.deb
 ```
 
-* Compile
+* build binaries:
 ```
-mkdir build
+mkdir ./build
 cd ./build
+eval `dpkg-architecture -aarmhf -f -s`
 cmake ../
 make
 ```
-compiled binary is in build/bin directory
+
+* build deb package:
+```
+make dist
+```
 
 ## Example usage
 
@@ -158,10 +159,6 @@ Console logging is available in foreground mode only.
 ## License
 
 GPLv3.0
-
-## TODO
-
-* pre-built packages
 
 ## Contribution
 
