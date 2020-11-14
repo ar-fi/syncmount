@@ -15,6 +15,29 @@ The nature of tasks, run by syncmount, requires root privileges to be able to mo
 * can mount filesystems both in read-only and read-write modes, depending on the label of partition/volume.
 * can be commanded by third party software to unmount particular partition/volume by means of dedicated POSIX Message Queue
 
+
+## Install from repository
+* add repository public key
+```
+wget -qO - https://ar-fi.github.io/deb/PUBLIC.KEY | sudo apt-key add -
+```
+
+* add repository URL to /etc/apt/sources.list
+```
+sudo add-apt-repository "deb http://ar-fi.github.io/deb focal main"
+```
+
+* update packages list
+```
+sudo apt update
+```
+
+* install package
+```
+sudo apt install syncmount
+```
+
+
 ## Build & install
 To compile under Debian/Ubuntu:
 
@@ -45,7 +68,7 @@ make dist
 
 * install package:
 ```
-sudo dpkg -i syncmount_1.0.0_amd64.deb
+sudo dpkg -i syncmount*.deb
 ```
 
 
