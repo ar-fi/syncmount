@@ -33,7 +33,7 @@ void LogFile::Write(const std::string &data, const std::string &ts)
         std::fstream log_file(filename, std::fstream::out | std::fstream::app);
         if (log_file.is_open())
         {
-            log_file << ts << ' ' << data << std::endl;
+            log_file << ts.c_str() << ' ' << data << std::endl;
             log_file.close();
         }
     }

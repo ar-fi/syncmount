@@ -17,7 +17,6 @@
 #include <tuple>
 #include <cstdarg>
 #include <cstring>
-#include <sstream>
 #include <memory>
 #include <signal.h>
 #include <sys/types.h>

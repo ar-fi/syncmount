@@ -12,7 +12,6 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <sstream>
 #include <chrono>
 #include <iomanip>
 #include "loggers.h"
@@ -93,26 +92,27 @@ private:
     std::string &ImplPrepareLogData(const std::string &data, enum ImplEventType event_type, bool read_only_flag = false)
     {
         log_data.clear();
-        std::stringstream ss;
+        // std::stringstream ss;
         switch (event_type)
         {
         case EventMount:
-            ss << (read_only_flag ? "RO" : "RW") << "MOUNT:";
+
+            log_data += read_only_flag ? "RO" : "RW";
+            log_data += "MOUNT:";
             break;
         case EventUnmount:
-            ss << "UNMOUNT:";
+            log_data += "UNMOUNT:";
             break;
         case EventError:
-            ss << "ERROR:";
+            log_data += "ERROR:";
             break;
         case EventInfo:
-            ss << "INFO:";
+            log_data += "INFO:";
             break;
         default:
             break;
         }
-        ss << data;
-        log_data = ss.str();
+        log_data += data;
         return log_data;
     };
 
@@ -121,14 +121,19 @@ private:
     void ImplLog(auto &data)
     {
         auto ts = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        std::ostringstream ss;
-        ss << std::put_time(gmtime(&ts), "%FT%TZ");
+        while (!std::strftime(ts_str.data(), ts_str.size(), "%FT%TZ", gmtime(&ts)))
+            ts_str.resize(ts_str.size() + 1);
+
         for (auto logger : loggers)
-            logger->Write(data, ss.str());
+            logger->Write(data, ts_str);
     }
 
     void ImplInit(const auto &options)
     {
+        const time_t tmp = 0;
+        while (!std::strftime(ts_str.data(), ts_str.size(), "%FT%TZ", gmtime(&tmp)))
+            ts_str.resize(ts_str.size() + 1);
+
         loggers = {new Console, new LogFile, new Syslog, new MQueue};
         for (auto &logger : loggers)
             logger->Init(options);
@@ -148,6 +153,7 @@ private:
 
     std::vector<AbstractLogger *> loggers;
     std::string log_data;
+    std::string ts_str;
     bool run_deinit;
     config_options_t const *options;
 };
