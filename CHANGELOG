@@ -1,0 +1,2 @@
+Release 1.0.1:
+    - get rid of GLIBCXX_3.4.26 stuff, breaking support for older Debian releases
