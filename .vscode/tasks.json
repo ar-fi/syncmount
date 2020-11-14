@@ -3,7 +3,7 @@
     "tasks": [
         {
             "label": "Build amd64",
-            "command": "eval `dpkg-architecture -aamd64 -f -s` ; cmake ../ ; make -j 12 ; cpack",
+            "command": "eval `dpkg-architecture -aamd64 -f -s` && cmake ../ && make -j 12 && cpack",
             "type": "shell",
             "group": "build",
             "problemMatcher": [],
@@ -14,7 +14,7 @@
         },
         {
             "label": "Build aarmhf",
-            "command": "eval `dpkg-architecture -aarmhf -f -s` ; cmake ../ ; make -j 12 ; cpack",
+            "command": "eval `dpkg-architecture -aarmhf -f -s` && cmake ../ && make -j 12 && cpack",
             "type": "shell",
             "group": "build",
             "problemMatcher": [],
