@@ -8,12 +8,10 @@
             "defines": [],
             "cStandard": "c17",
             "cppStandard": "c++20",
-            "configurationProvider": "go2sh.cmake-integration",
             "intelliSenseMode": "${default}",
             "compilerArgs": [
                 "-Werror"
             ]
-            
         }
     ],
     "version": 4
