@@ -1,3 +1,7 @@
+Release 1.0.4:
+    - New feature: repeat logging of all mounted paths by command 'L' via control message queue
+    - Default start options get rid of syslog (-s) option
+
 Release 1.0.3:
     - deb package postinst & prerm  srcipts
 

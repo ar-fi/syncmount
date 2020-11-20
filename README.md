@@ -183,6 +183,10 @@ Console logging is available in foreground mode only.
 
 GPLv3.0
 
+## TODO:
+
+* add explicit (enum controlled?) option for logging to particular destination
+
 ## Contribution
 
 You're free to issue pull-requests, while it is not guaranteed to be revised in fixed time
