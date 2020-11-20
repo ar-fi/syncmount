@@ -10,7 +10,7 @@
 ### END INIT INFO
 
 dir="/"
-cmd="syncmount -U -r -m -c -b -w arfi_license -s -S"
+cmd="syncmount -U -r -m -c -b -w arfi_license -S"
 user="root"
 
 name=`basename $0`

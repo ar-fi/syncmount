@@ -653,15 +653,31 @@ int main(const int argc, const char *argv[])
             char buffer[MQUEUE_MESSAGE_SIZE];
             int read_bytes = mq_receive(control->fd, buffer, sizeof(buffer), 0);
 
-            int path_len = 0;
-            while (path_len < read_bytes && buffer[path_len]) // search zero terminated C string
-                path_len++;
+            int command_len = 0;
+            while (command_len < read_bytes && buffer[command_len]) // search zero terminated C string
+                command_len++;
 
-            if (path_len)
+            if (command_len)
             {
-                std::string path(buffer, path_len);
-                if (mounted_paths.contains(path))
-                    remove_device(mounted_paths.at(path).first);
+                switch (buffer[0])
+                {
+                case '/':
+                {
+                    std::string path(buffer, command_len);
+                    if (mounted_paths.contains(path))
+                        remove_device(mounted_paths.at(path).first);
+                }
+                break;
+                case 'L':
+                case 'l':
+                    for (auto mount_path : mounted_paths)
+                        Log::Mount(mount_path.first, mount_path.second.second & MS_RDONLY);
+
+                    break;
+
+                default:
+                    break;
+                }
             }
         }
 
