@@ -92,7 +92,6 @@ private:
     std::string &ImplPrepareLogData(const std::string &data, enum ImplEventType event_type, bool read_only_flag = false)
     {
         log_data.clear();
-        // std::stringstream ss;
         switch (event_type)
         {
         case EventMount:
