@@ -53,8 +53,8 @@ using namespace std::string_literals;
 
 const std::regex MOUNT_DIR_NAME_RE("/" MOUNT_DIR_PREFIX "[" MOUNT_DIR_RND_SUFFIX_VOCAB "]+$");
 
-#define SUPPRESS_LOGGING (true)
-#define DONT_SUPPRESS_LOGGING (false)
+#define SUPPRESS (true)
+#define DONT_SUPPRESS (false)
 
 // const std::regex r(""s + MOUNT_DIR_PREFIX +  );
 
@@ -503,8 +503,8 @@ int main(const int argc, const char *argv[])
     };
 
     // lambda
-    std::function<void(const std::string &, bool)> // recursion requires explicit prototype
-        probe_device = [&](const std::string &dev_name, bool suppress_logging) {
+    std::function<void(const std::string &, bool, bool)> // recursion requires explicit prototype
+        probe_device = [&](const std::string &dev_name, bool suppress_logging, bool suppress_recursion) {
             const blkid_probe pr = blkid_new_probe_from_filename(dev_name.c_str());
             if (!pr)
                 return;
@@ -513,12 +513,13 @@ int main(const int argc, const char *argv[])
 
             blkid_partlist ls;
             int nparts;
-
             ls = blkid_probe_get_partitions(pr);
+
             if (ls && (nparts = blkid_partlist_numof_partitions(ls)) != 0)
             {
-                for (int i = 0; i < nparts; i++)
-                    probe_device(dev_name + std::to_string(i + 1), suppress_logging);
+                if (!suppress_recursion)
+                    for (int i = 0; i < nparts; i++)
+                        probe_device(dev_name + std::to_string(i + 1), suppress_logging, suppress_recursion);
             }
             else
             {
@@ -628,7 +629,7 @@ int main(const int argc, const char *argv[])
                                  [&](const auto &obj) {
                                      return !obj.compare(device_path);
                                  }) == mounted_devices.end())
-                    probe_device(device_path, SUPPRESS_LOGGING);
+                    probe_device(device_path, SUPPRESS, SUPPRESS);
                 dev_list = udev_list_entry_get_next(dev_list);
             }
             udev_enumerate_unref(udev_enum);
@@ -687,7 +688,7 @@ int main(const int argc, const char *argv[])
             const std::string device_path((udev_list_entry_get_value(udev_list_entry_get_by_name(udev_device_get_properties_list_entry(current_device), "DEVNAME"))));
 
             if (device_action == "add")
-                probe_device(device_path, DONT_SUPPRESS_LOGGING);
+                probe_device(device_path, DONT_SUPPRESS, DONT_SUPPRESS);
             else if (device_action == "remove")
                 remove_device(device_path);
 
